@@ -1,0 +1,37 @@
+image:
+  name: registry.gitlab.com/gitlab-org/gitlab-build-images:terraform
+
+cache:
+  paths:
+    - .terraform
+
+variables:
+  YC_SERVICE_ACCOUNT_KEY_FILE: /tmp/vadimg.json
+
+before_script:
+  - terraform init
+  - tcho $YC_KEY > /tmp/vadimg.json
+
+stages:
+  - validate
+  - plan
+  - apply
+
+validate:
+  stage: validate
+  script:
+    - terraform validate
+
+plan:
+  stage: plan
+  script:
+    - terraform plan -out="planfile"
+  artifacts:
+    paths:
+      - planfile
+
+apply:
+  stage: apply
+  script:
+    - terraform apply -auto-approve "planfile"
+  when: manual
