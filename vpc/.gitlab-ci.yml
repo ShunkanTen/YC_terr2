@@ -1,0 +1,22 @@
+Plan-IAM_job:
+  stage: plan
+  extends: .plan_template
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+      when: manual
+      changes:
+        - "cr.yandex/crprles4pfjpj44kv3fh/vpc/*.tf"
+  variables:
+    TF_DIR: "./vpc"
+
+Apply-IAM_job:
+  stage: apply
+  extends: .apply_template
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+      when: manual
+      changes:
+        - "cr.yandex/crprles4pfjpj44kv3fh/vpc/*.tf"
+      allow_failure: false
+  variables:
+    TF_DIR: "./vpc"

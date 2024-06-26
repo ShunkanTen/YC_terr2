@@ -1,37 +1,36 @@
-image:
-  name: registry.gitlab.com/gitlab-org/gitlab-build-images:terraform
-
-cache:
-  paths:
-    - .terraform
-
-variables:
-  YC_SERVICE_ACCOUNT_KEY_FILE: /tmp/vadimg.json
-
-before_script:
-  - terraform init
-  - tcho $YC_KEY > /tmp/vadimg.json
+default:
+  tags:
+    - my-gitlab-runner
 
 stages:
-  - validate
   - plan
   - apply
 
-validate:
-  stage: validate
-  script:
-    - terraform validate
+before_script:
+  - echo $SERVICE_ACCOUNT_JSON | base64 -d > $CI_PROJECT_DIR/service-account.json
 
-plan:
+.plan_template:
   stage: plan
+  image: cr.yandex/crprles4pfjpj44kv3fh/terraform-runner:1.0.0
   script:
-    - terraform plan -out="planfile"
-  artifacts:
-    paths:
-      - planfile
+    - cd $TF_DIR
+    - tfswitch
+    - ./terraform init
+    - ./terraform validate
+    - ./terraform plan
 
-apply:
+
+.apply_template:
   stage: apply
+  image: cr.yandex/crprles4pfjpj44kv3fh/terraform-runner:1.0.0
   script:
-    - terraform apply -auto-approve "planfile"
-  when: manual
+    - cd $TF_DIR
+    - tfswitch
+    - ./terraform init
+    - ./terraform validate
+    - ./terraform apply -auto-approve
+
+include:
+  - local: 'iam/.gitlab-ci.yml'
+  - local: 'msk/.gitlab-ci.yml'
+  - local: 'vpc/.gitlab-ci.yml'
